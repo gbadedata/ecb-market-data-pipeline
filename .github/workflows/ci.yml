@@ -1,0 +1,48 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore dependencies
+        run: dotnet restore EcbMarketData.sln
+
+      - name: Build with warnings as errors
+        run: dotnet build EcbMarketData.sln --configuration Release --no-restore
+
+      - name: Run tests
+        run: >-
+          dotnet test EcbMarketData.sln
+          --configuration Release
+          --no-build
+          --collect:"XPlat Code Coverage"
+          --results-directory TestResults
+          --logger "trx;LogFileName=tests.trx"
+
+      - name: Upload test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-evidence
+          path: TestResults/
+          if-no-files-found: error
+          retention-days: 14

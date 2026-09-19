@@ -1,0 +1,66 @@
+name: scheduled-ecb-ingestion
+
+on:
+  schedule:
+    - cron: "15 17 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      lookback_days:
+        description: Number of calendar days to ingest
+        required: false
+        default: "45"
+
+permissions:
+  contents: read
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Build application
+        run: dotnet build src/EcbMarketData/EcbMarketData.csproj --configuration Release
+
+      - name: Resolve ingestion period
+        id: period
+        shell: bash
+        env:
+          REQUESTED_LOOKBACK: ${{ inputs.lookback_days }}
+        run: |
+          lookback="${REQUESTED_LOOKBACK:-45}"
+          if ! [[ "$lookback" =~ ^[0-9]+$ ]] || (( lookback < 1 || lookback > 3650 )); then
+            echo "lookback_days must be an integer from 1 to 3650" >&2
+            exit 64
+          fi
+          echo "start=$(date -u -d "$lookback days ago" +%F)" >> "$GITHUB_OUTPUT"
+          echo "end=$(date -u +%F)" >> "$GITHUB_OUTPUT"
+
+      - name: Ingest ECB reference rates
+        run: >-
+          dotnet run
+          --project src/EcbMarketData/EcbMarketData.csproj
+          --configuration Release
+          --no-build
+          --
+          --start "${{ steps.period.outputs.start }}"
+          --end "${{ steps.period.outputs.end }}"
+          --currencies GBP,USD,JPY,CHF
+          --output artifacts/ecb
+
+      - name: Upload data and quality evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ecb-market-data-${{ github.run_id }}
+          path: artifacts/ecb/
+          if-no-files-found: warn
+          retention-days: 30
