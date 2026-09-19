@@ -19,7 +19,7 @@ public sealed class DataQualityEvaluatorTests
             CreateObservation(new DateOnly(2026, 9, 15), 0.8675m),
         ];
 
-        DataQualityReport report = new DataQualityEvaluator().Evaluate(observations, options, IngestedAt);
+        DataQualityReport report = DataQualityEvaluator.Evaluate(observations, options, IngestedAt);
 
         Assert.True(report.Passed);
         Assert.Empty(report.Issues);
@@ -37,7 +37,7 @@ public sealed class DataQualityEvaluatorTests
             CreateObservation(new DateOnly(2026, 9, 15), 0.8675m),
         ];
 
-        DataQualityReport report = new DataQualityEvaluator().Evaluate(observations, options, IngestedAt);
+        DataQualityReport report = DataQualityEvaluator.Evaluate(observations, options, IngestedAt);
 
         Assert.False(report.Passed);
         Assert.Contains(report.Issues, issue => issue.Rule == "positive_rate");

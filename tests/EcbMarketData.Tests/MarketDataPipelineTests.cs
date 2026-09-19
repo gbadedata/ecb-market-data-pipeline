@@ -38,7 +38,6 @@ public sealed class MarketDataPipelineTests
             MarketDataPipeline pipeline = new(
                 new StubDataSource([payload]),
                 new FileDataStore(),
-                new DataQualityEvaluator(),
                 new FixedTimeProvider(fixedTime));
 
             PipelineRunReport first = await pipeline.RunAsync(options, CancellationToken.None);

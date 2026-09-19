@@ -45,8 +45,7 @@ public static class Program
 
             MarketDataPipeline pipeline = new(
                 new EcbApiClient(httpClient, options.ApiBaseUri),
-                new FileDataStore(),
-                new DataQualityEvaluator());
+                new FileDataStore());
 
             PipelineRunReport result = await pipeline
                 .RunAsync(options, cancellation.Token)

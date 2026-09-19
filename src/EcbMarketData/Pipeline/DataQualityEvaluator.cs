@@ -3,9 +3,9 @@ using EcbMarketData.Domain;
 
 namespace EcbMarketData.Pipeline;
 
-public sealed class DataQualityEvaluator
+public static class DataQualityEvaluator
 {
-    public DataQualityReport Evaluate(
+    public static DataQualityReport Evaluate(
         IReadOnlyList<FxObservation> observations,
         IngestionOptions options,
         DateTimeOffset evaluatedAtUtc)
