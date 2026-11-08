@@ -60,10 +60,17 @@ public static class Program
             Console.Error.WriteLine(IngestionOptions.Usage);
             return 64;
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
         {
             Console.Error.WriteLine("Ingestion cancelled.");
             return 130;
+        }
+        catch (OperationCanceledException exception)
+        {
+            // HttpClient reports its timeout as a cancellation. Nobody cancelled the run,
+            // so report it as the failure it is rather than exiting with the Ctrl+C code.
+            Console.Error.WriteLine($"Ingestion failed: {exception.Message}");
+            return 1;
         }
         catch (Exception exception)
         {
