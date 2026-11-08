@@ -28,7 +28,9 @@ The canonical business key is observation date, base currency and quote currency
 
 ### Failure behaviour
 
-The extractor retries HTTP 429 and 5xx responses with bounded exponential backoff and honours a short `Retry-After` value. Contract violations and failed quality gates stop processed-data publication. Raw inputs and quality evidence are still retained for diagnosis.
+The extractor retries HTTP 429 and 5xx responses with bounded exponential backoff and honours a short `Retry-After` value. Timeouts and connection errors are not retried; they fail the run with exit code 1.
+
+Contract violations and failed quality gates both stop processed-data publication, but they leave different evidence. A failed quality gate happens after extraction, so the raw responses, quality report and manifest are all written for diagnosis (exit code 2). A contract violation (a missing column, malformed date or decimal, or inconsistent row width) is raised while parsing, before anything is written (exit code 1).
 
 ### Operational automation
 
